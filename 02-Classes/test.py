@@ -158,6 +158,10 @@ def load(filename):
         prints.append(makeInstanceOfPrint(paragraph))
     return sorted(prints, key = lambda x: int(x.print_id))
 
+if len(sys.argv)!=2:
+    print("Wrong Number Arguments")
+    raise SystemExit
+
 filename = sys.argv[1]
 prints=load(filename)
 
