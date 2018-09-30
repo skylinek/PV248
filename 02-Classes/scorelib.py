@@ -7,9 +7,9 @@ class Print:
 
     def format(self):
         print('Print Number: %s' % self.print_id)
-        composers=None
+        composers=""
         for composer in self.edition.composition.authors:
-            composers=composer.stringPerson()+","
+            composers=composers+composer.stringPerson()+";"
         if composers is not '' and composers is not None:
             composers = composers[:-1]
             sys.stdout.write("Composer: ")
@@ -27,7 +27,8 @@ class Print:
         if self.edition.composition.year:
             print('Composition Year: {}'.format(self.edition.composition.year))
         if self.edition.name:
-            print('Edition: {}'.format(self.edition.name))
+            if self.edition.name !=' ':
+                print('Edition: {}'.format(self.edition.name))
         for index, voice in zip(range(len(self.edition.composition.voices)), self.edition.composition.voices):
             if voice.name and voice.range:
                 print('Voice {}: {}, {}'.format(index+1, voice.range, voice.name))
@@ -36,10 +37,10 @@ class Print:
             elif voice.name:
                 print('Voice {}: {}'.format(index+1, voice.name))
 
-        composers=None
+        composers=""
         if self.edition.authors:
             for composer in self.edition.authors:
-                composers = composer.stringPerson() + ","
+                composers =composers+ composer.stringPerson() + ";"
 
             if composers is not '' and composers is not None:
                 composers = composers[:-1]
@@ -47,12 +48,13 @@ class Print:
                 if not "None" in composers:
                     print(composers)
 
-            if not self.partiture:
-                self.partiture = False
-            print('Partiture: {}' .format('yes' if self.partiture else 'no'))
+        if self.partiture==True:
+            print('Partiture: {}' .format('yes'))
+        else:
+            print('Partiture: {}' .format('no'))
 
-            if self.composition().incipit:
-                print('Incipit: {}' .format(self.edition.composition.incipit))
+        if self.edition.composition.incipit:
+            print('Incipit: {}' .format(self.edition.composition.incipit))
 
     def composition(self):
         return self.edition.composition

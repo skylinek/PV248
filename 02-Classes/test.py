@@ -77,6 +77,9 @@ def makeVoices(voices):
     range=None
     name=None
     for voice in voices:
+        range = None
+        name = None
+        # print(voice)
         voice=voice.split(':')
         voices_dict[voice[0]]=voice[1]
         match = re.match(r'^([^-]+--[^,\n]+)?', voice[1])
@@ -86,8 +89,12 @@ def makeVoices(voices):
         if name is not '' and name[0]==',':
             name=name[1:].strip()
         count_voices=count_voices+1
+        # print(name)
+        # print(range)
         if name is not None and name is not '' or range is not None and range is not '':
             voices_list.append(Voice(name,range))
+            range = None
+            name = None
     return voices_list,count_voices
 
 
@@ -111,9 +118,10 @@ def find_person_born_died(person_name_born_died):
     # print("xX")
     born=None
     died=None
+    # print(person_name_born_died)
     years_in_brackets = re.search(r" ?\([^)]+\)", person_name_born_died)
     if years_in_brackets is not None:
-        if years_in_brackets.group(0)[3].isdigit():
+        if years_in_brackets.group(0)[4].isdigit():
             years=years_in_brackets.group(0)[2:-1]
             years=re.sub('--','-',years)
             years=years.split('-')
@@ -122,11 +130,11 @@ def find_person_born_died(person_name_born_died):
                 return None,years
 
             if '/' in years[0]:
-                years[0]=years[0][:-2]
+                years[0]=None
 
             if len(years)>1:
                 if '/' in years[1]:
-                    years[1] = years[1][:-2]
+                    years[1] = None
 
             if years[0] is not None:
                 born = years[0]
