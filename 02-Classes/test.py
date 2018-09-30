@@ -86,7 +86,8 @@ def makeVoices(voices):
         if name is not '' and name[0]==',':
             name=name[1:].strip()
         count_voices=count_voices+1
-        voices_list.append(Voice(name,range))
+        if name is not None and name is not '' or range is not None and range is not '':
+            voices_list.append(Voice(name,range))
     return voices_list,count_voices
 
 

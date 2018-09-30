@@ -27,12 +27,14 @@ class Print:
         if self.edition.composition.year:
             print('Composition Year: {}'.format(self.edition.composition.year))
         if self.edition.name:
-            print('Edition: {}'.format(self.edition.composition.name))
+            print('Edition: {}'.format(self.edition.name))
         for index, voice in zip(range(len(self.edition.composition.voices)), self.edition.composition.voices):
-            if voice.range:
+            if voice.name and voice.range:
                 print('Voice {}: {}, {}'.format(index+1, voice.range, voice.name))
-            else:
-                print('Voice {}: {}'.format(index+1,voice.name))
+            elif voice.range:
+                print('Voice {}: {}'.format(index+1, voice.range))
+            elif voice.name:
+                print('Voice {}: {}'.format(index+1, voice.name))
 
         composers=None
         if self.edition.authors:
@@ -54,6 +56,7 @@ class Print:
 
     def composition(self):
         return self.edition.composition
+
 class Edition:
     def __init__(self, composition, authors, name):
         self.composition = Composition(None,None,None,None,None,None,None)
