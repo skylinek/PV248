@@ -28,84 +28,80 @@ class DBoperations:
             name=author.name
             born=author.born
             died=author.died
-            self.c.execute('SELECT * FROM person WHERE name IS ?', (name,))
-            row = self.c.fetchone()
-            if row is not None:
+            vybranyRadek = self.selectRow('SELECT * FROM person WHERE name IS ?', name)
+            if vybranyRadek is not None:
                 if born is None:
-                    born=row[1];
+                    born=vybranyRadek[1];
                 if died is None:
-                    died=row[2];
+                    died=vybranyRadek[2];
                 self.c.execute("UPDATE person SET  born=?, died=? WHERE name=? ",(born,died,name))
-                IDs.append(int(row[0]))
+                IDs.append(int(vybranyRadek[0]))
             else:
                 self.c.execute("INSERT INTO person(name,born,died) VALUES (?,?,?)", (name, born, died))
                 IDs.append(int(self.lastID()))
         return IDs
 
+    def selectRow(self,vyraz, *promene ):
+        self.c.execute(vyraz, (*promene,))
+        return self.c.fetchone()
+
     def instertIntoScore(self, name, genre, key,incipit,year):
-        self.c.execute('SELECT * FROM score WHERE name IS ? AND '
+        vybranyRadek = self.selectRow('SELECT * FROM score WHERE name IS ? AND '
                        'genre IS ? AND key  is ? AND incipit IS ? '
-                       'and year IS ? ',(name,genre, key, incipit, year) )
-        row = self.c.fetchone()
-        if row is None:
+                       'and year IS ? ', name,genre,key, incipit, year)
+        if vybranyRadek is None:
             self.c.execute("INSERT INTO score (name,genre,key,incipit,year) VALUES (?,?,?,?,?)", ( name, genre, key,incipit,year))
             return self.lastID()
         else:
-            return row[0]
+            return vybranyRadek[0]
 
     def instertIntoVoice(self, number,score,range,name):
-        self.c.execute('SELECT * FROM voice WHERE number IS ? AND '
+        vybranyRadek = self.selectRow('SELECT * FROM voice WHERE number IS ? AND '
                        'score IS ? AND range  is ? AND name IS ? '
-                       , (number, score, range, name))
-        row = self.c.fetchone()
-        if row is None:
+                       , number, score, range, name)
+        if vybranyRadek is None:
             self.c.execute("INSERT INTO voice (number,score,range,name) VALUES (?,?,?,?)",
                            (number,score,range,name))
             return self.lastID()
         else:
-            return row[0]
+            return vybranyRadek[0]
 
 
     def instertIntoEdition(self, IDscore, name, year ):
-        self.c.execute('SELECT * FROM edition WHERE score IS ? AND '
+        vybranyRadek = self.selectRow('SELECT * FROM edition WHERE score IS ? AND '
                        'name IS ? '
-                       , ( IDscore, name))
-        row = self.c.fetchone()
-        if row is None:
+                       ,  IDscore, name)
+        if vybranyRadek is None:
             self.c.execute("INSERT INTO edition (score,name) VALUES (?,?)",
                            (IDscore, name))
             return self.lastID()
         else:
-            return row[0]
+            return vybranyRadek[0]
 
     def instertIntoScore_Author(self, score,composers):
         for composer in composers:
-            self.c.execute(
-                "SELECT * FROM score_author WHERE score IS ? AND composer IS ?", (score, composer))
-            row = self.c.fetchone()
-            if row is None:
+            vybranyRadek = self.selectRow("SELECT * FROM score_author WHERE score IS ? AND composer IS ?",
+                                 score, composer)
+            if vybranyRadek is None:
                 self.c.execute("INSERT INTO score_author (score,composer) VALUES (?,?)",
                                (score, composer))
 
     def instertIntoEdition_Author(self, edition,editors):
         for editor in editors:
-            self.c.execute(
-                "SELECT * FROM edition_author WHERE edition IS ? AND editor IS ?", (edition, editor))
-            row = self.c.fetchone()
-            if row is None:
+            vybranyRadek = self.selectRow("SELECT * FROM edition_author WHERE edition IS ? AND editor IS ?",
+                                 edition, editor)
+            if vybranyRadek is None:
                 self.c.execute("INSERT INTO edition_author (edition,editor) VALUES (?,?)",
                                (edition, editor))
 
     def instertIntoPrint(self, edition, print_instance):
-        # if print_instance.partiture is not None:
         if print_instance.partiture is True:
             partiture = "Y"
         else:
             partiture = "N"
-        self.c.execute(
-            "SELECT * from print WHERE id IS ? AND partiture IS ? AND edition is ?", (print_instance.print_id, partiture, edition))
-        row = self.c.fetchone()
-        if row is None:
+        vybranyRadek = self.selectRow("SELECT * from print WHERE id IS ? AND partiture IS ? AND edition is ?",
+                             print_instance.print_id, partiture, edition)
+        if vybranyRadek is None:
             self.c.execute("INSERT INTO print (id,partiture,edition) VALUES (?,?,?)",
                            (print_instance.print_id,partiture, edition))
 
@@ -127,13 +123,8 @@ db=DBoperations(databasePath)
 
 
 for onePrint in prints:
-    # authors=print.composition().authors
     authors=onePrint.edition.composition.authors
     compose=onePrint.edition
-    IDsComposers=[]
-    IDsComposers=db.instertIntoPerson(authors)
-    IDsEditors=[]
-    IDsEditors=db.instertIntoPerson(compose.authors)
 
     IDScore=db.instertIntoScore(compose.composition.name,compose.composition.genre,compose.composition.key,compose.composition.incipit,compose.composition.year)
 
@@ -142,8 +133,8 @@ for onePrint in prints:
         db.instertIntoVoice(i,IDScore,voice.range,voice.name)
         i=i+1
     IDEdition=db.instertIntoEdition(IDScore,compose.name,None)
-    db.instertIntoScore_Author(IDScore,IDsComposers)
-    db.instertIntoEdition_Author(IDEdition,IDsEditors)
+    db.instertIntoScore_Author(IDScore,db.instertIntoPerson(authors))
+    db.instertIntoEdition_Author(IDEdition,db.instertIntoPerson(compose.authors))
     db.instertIntoPrint(IDEdition,onePrint)
 
 db.commit()
