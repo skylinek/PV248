@@ -1,6 +1,7 @@
 import sys
 import re
 import os
+import json
 import sqlite3
 
 from scorelib import *
@@ -21,79 +22,6 @@ class DBoperations:
         sql=open_file("scorelib.sql")
         return sql.read()
 
-    def isScore(self,onePrint):
-
-        name = None
-        genre = None
-        key = None
-        incipit = None
-        year = None
-
-        compositionOnePrint=onePrint.edition.composition
-
-        if compositionOnePrint.name:
-            name = compositionOnePrint.name
-        if compositionOnePrint.genre:
-            genre = compositionOnePrint.genre
-        if compositionOnePrint.key:
-            key = compositionOnePrint.key
-        if compositionOnePrint.incipit:
-            incipit = compositionOnePrint.incipit
-        if compositionOnePrint.year:
-            year = compositionOnePrint.year
-        ID_score=self.selectRow("SELECT * FROM score WHERE (genre is null OR genre = ?) AND (name is null OR name = ?)  AND (key is null OR key = ?) AND (incipit is null OR incipit = ?) AND (year is null OR year = ?)",
-             genre, name, key, incipit, year)
-        if ID_score is None:
-            return False
-
-        ID_score=ID_score[0]
-
-        edition = self.selectRow("SELECT * FROM edition WHERE score = ?", ID_score)
-        edition_name = None
-        if onePrint.edition.name != '':
-            edition_name = onePrint.edition.name
-        if edition_name != edition[2]:
-            return False
-
-        edition_author=self.selectRows("SELECT editor FROM edition_author WHERE edition = ?", edition[1])
-
-        editors = self.makePersonsArray(edition_author)
-        if self.testPersonCounts(onePrint.edition.authors,editors) is False:
-            return False
-
-
-        score_author=self.selectRows("SELECT composer FROM score_author WHERE score = ?", ID_score)
-        authors = self.makePersonsArray(score_author)
-        if self.testPersonCounts(compositionOnePrint.authors, authors) is False:
-            return False
-
-        voices=self.selectRows("SELECT name, range FROM voice WHERE score = ?",ID_score)
-        if len(compositionOnePrint.voices) != len(voices):
-            return False
-        else:
-            for i, voice in enumerate(compositionOnePrint.voices):
-                if voices[i][1] != voice.range:
-                    return False
-                if voices[i][0] != voice.name:
-                    return False
-
-        return ID_score
-
-    def testPersonCounts(self,onePrintAuthors, authors):
-        if len(onePrintAuthors) != len(authors):
-            return False
-        elif len(onePrintAuthors) != 0:
-            if len(authors) != 0:
-                for i, author in enumerate(onePrintAuthors):
-                    if authors[i] != author.name:
-                        return False
-
-    def makePersonsArray(self, author_rows):
-        authors = []
-        for composer in author_rows:
-            peroson_name = self.selectRow("SELECT name FROM person WHERE id = ?", composer[0])
-            authors.append(peroson_name[0])
-        return authors
 
     def instertIntoPerson(self,authors):
         IDs=[]
@@ -114,6 +42,9 @@ class DBoperations:
                 IDs.append(int(self.lastID()))
         return IDs
 
+    def selectExecute(self,vyraz, *promene ):
+        return self.c.execute(vyraz, (*promene,))
+
     def selectRow(self,vyraz, *promene ):
         self.c.execute(vyraz, (*promene,))
         return self.c.fetchone()
@@ -121,6 +52,7 @@ class DBoperations:
     def selectRows(self,vyraz, *promene ):
         self.c.execute(vyraz, (*promene,))
         return self.c.fetchall()
+
 
     def instertIntoScore(self, name, genre, key,incipit,year):
         vybranyRadek = self.selectRow('SELECT * FROM score WHERE name IS ? AND '
@@ -182,53 +114,43 @@ class DBoperations:
             self.c.execute("INSERT INTO print (id,partiture,edition) VALUES (?,?,?)",
                            (print_instance.print_id,partiture, edition))
 
-
-
-
     def lastID(self):
         return self.c.lastrowid
     def commit(self):
         self.conn.commit()
-
     def close(self):
         self.conn.close()
 
-if len(sys.argv)!=3:
-    print("Wrong Number Arguments")
-    raise SystemExit
+# if len(sys.argv)!=3:
+#     print("Wrong Number Arguments")
+#     raise SystemExit
 
-filename = sys.argv[1]
-prints=load(filename)
-
-
-databasePath=sys.argv[2]
-db=DBoperations(databasePath)
+# filename = sys.argv[1]
+# prints=load(filename)
 
 
-for onePrint in prints:
-    authors=onePrint.edition.composition.authors
-    compose=onePrint.edition
+# databasePath=sys.argv[2]
+# databasePath="scorelib.dat"
+# db=DBoperations(databasePath)
 
-    isScore=db.isScore(onePrint)
-    if isScore is False:
-        IDScore=db.instertIntoScore(compose.composition.name,compose.composition.genre,compose.composition.key,compose.composition.incipit,compose.composition.year)
-
-        i=1
-        for voice in compose.composition.voices:
-            db.instertIntoVoice(i,IDScore,voice.range,voice.name)
-            i=i+1
-        IDEdition = db.instertIntoEdition(IDScore, compose.name, None)
-        db.instertIntoEdition_Author(IDEdition, db.instertIntoPerson(compose.authors))
-        db.instertIntoScore_Author(IDScore, db.instertIntoPerson(authors))
-        db.instertIntoPrint(IDEdition, onePrint)
-
-    else:
-        IDScore=isScore
-        IDEdition = db.instertIntoEdition(IDScore, compose.name, None)
-        db.instertIntoScore_Author(IDScore, db.instertIntoPerson(authors))
-        db.instertIntoPrint(IDEdition, onePrint)
+#
+# for onePrint in prints:
+#     authors=onePrint.edition.composition.authors
+#     compose=onePrint.edition
+#
+#     IDScore=db.instertIntoScore(compose.composition.name,compose.composition.genre,compose.composition.key,compose.composition.incipit,compose.composition.year)
+#
+#     i=1
+#     for voice in compose.composition.voices:
+#         db.instertIntoVoice(i,IDScore,voice.range,voice.name)
+#         i=i+1
+#     IDEdition=db.instertIntoEdition(IDScore,compose.name,None)
+#     db.instertIntoScore_Author(IDScore,db.instertIntoPerson(authors))
+#     db.instertIntoEdition_Author(IDEdition,db.instertIntoPerson(compose.authors))
+#     db.instertIntoPrint(IDEdition,onePrint)
 
 
 
-db.commit()
-db.close()
+
+
+
