@@ -225,8 +225,8 @@ def find_person_born_died(person_name_born_died):
             years=years_in_brackets.group(0)[2:-1]
             years=re.sub('--','-',years)
             years=years.split('-')
-            if years[0] is '+':
-                years=int(years[1:])
+            if years[0][0] is '+':
+                years=int(years[0][1:])
                 return None,years
 
             if '/' in years[0]:
