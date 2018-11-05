@@ -8,7 +8,6 @@ left=[]
 charactersOfLeft=[]
 
 def parseLine(line):
-
     sides=line.split('=')
     right.append(int(sides[1]))
     withoutPlus=sides[0].split('+')
@@ -104,6 +103,8 @@ def main():
     data = f.read()
     result=[]
     for line in data.split("\n"):
+        if line is "":
+            continue
         result.append(parseLine(line))
 
 
