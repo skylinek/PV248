@@ -58,7 +58,7 @@ def load(filename,id):
     resultToJson['median'] = panda_file.median()
     resultToJson['total'] =  panda_file.sum()
     resultToJson['passed'] = int(panda_file[panda_file>0].count())
-    resultToJson['regression']=resultOfRegresion
+    resultToJson['regression slope']=resultOfRegresion
     if points16 is not None:
         resultToJson['date 16'] = datetime.fromordinal(int(points16)).strftime("%Y-%m-%d")
         resultToJson['date 20'] = datetime.fromordinal(int(points20)).strftime("%Y-%m-%d")
