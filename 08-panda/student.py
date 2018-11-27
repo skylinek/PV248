@@ -38,7 +38,7 @@ def load(filename,id):
 
     panda_file = panda_file.groupby(level=0).sum()
     datum = datum.groupby(level=0).sum()
-    datum = datum.reindex(datum.index, axis='index')
+    datum = datum.reindex(sorted(datum.index), axis='index')
     datum = datum.cumsum()
     startSemester = datetime.strptime("2018-09-17", '%Y-%m-%d').date().toordinal()
     for column in list(datum.index.values):
