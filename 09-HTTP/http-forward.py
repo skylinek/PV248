@@ -38,12 +38,20 @@ class myServer(http.server.BaseHTTPRequestHandler):
                 jsonResult["code"] = myResponse.getcode()
                 jsonResult["headers"] = dict(myResponse.getheaders())
                 contentType=  myResponse.info().get_content_type()
-                myBody=str(myResponse.read())
+                myBody = myResponse.read()
 
-                if contentType== "application/json" or testValidJson(myBody):
-                    jsonResult["json"]=myBody
+                try:
+                    decodedBody = testValidJson(myBody)
+                except UnicodeDecodeError:
+                    jsonResult["content"] = str(myBody)
                 else:
-                    jsonResult["content"]=myBody
+                    pass
+
+                if decodedBody is False:
+                    jsonResult["content"] = str(myBody.decode())
+                else:
+                    jsonResult["json"] = json.loads(myBody.decode())
+
         except timeout:
             jsonResult["code"]="timeout"
 
@@ -63,20 +71,22 @@ class myServer(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(bytes(json.dumps(myDict),encoding='utf8'))
-            return
+            return    
         myJSON= json.loads(MYrequest)
+        
+
         myHeaders=dict()
         if "headers" in myJSON.keys():
             myHeaders = myJSON["headers"]
 
-        if ("type" in myJSON and "content" not in myJSON and myJSON["type"] == "POST"):
+        if ("type" in myJSON.keys() and "content" not in myJSON.keys() and myJSON["type"] == "POST"):
             self.send_response(200)
             myDict = {"code": "invalid json"}
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(bytes(json.dumps(myDict).encode()))
             return
-        elif ("url" not in myJSON):
+        elif ("url" not in myJSON.keys()):
             self.send_response(200)
             myDict = {"code": "invalid json"}
             self.send_header("Content-Type", "application/json")
@@ -111,33 +121,52 @@ class myServer(http.server.BaseHTTPRequestHandler):
             zbytekURL= "/"+mySplittedURL[1]
 
 
-        if "timeout" in myJSON:
+        if "timeout" in myJSON.keys():
             myClient=HTTPConnection(mynewURL, timeout=myJSON["timeout"])
         else:
             myClient=HTTPConnection(mynewURL, timeout=1)
+        
+        if "type" in myJSON.keys() and myJSON["type"] == "POST":
+            body = myJSON["content"]
+        else:
+            body = None 
+
+        if body is not None and not isinstance(body, str):
+            body = json.dumps(body)
+        
+
         try:
             myClient.request(myJSON["type"], zbytekURL, myBody, myHeaders)
         except socket.timeout:
-            jsonResult = {}
-            jsonResult["code"] = "timeout"
+            self.send_response(200)
+            myDict = {"code": "timeout"}
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(bytes(json.dumps(jsonResult).encode()))
+            self.wfile.write(bytes(json.dumps(myDict).encode()))
             return
 
-        self.send_response(200)
         myResponse=myClient.getresponse()
-        jsonResult = {}
+        jsonResult = dict()
         jsonResult["code"] = myResponse.getcode()
-        jsonResult["headers"] = dict(myResponse.getheaders())
+        jsonResult["headers"] = myResponse.getheaders()
+
         contentType = myResponse.info().get_content_type()
-        myBody = str(myResponse.read())
+        myBody = myResponse.read()
 
-        if contentType == "application/json" or testValidJson(myBody):
-            jsonResult["json"] = myBody
+ 
+        try:
+            decodedBody=testValidJson(myBody)
+        except UnicodeDecodeError:
+            jsonResult["content"] = str(myBody)
         else:
-            jsonResult["content"] = myBody
-
+            pass
+        
+        if decodedBody is False:
+            jsonResult["content"] = str(myBody.decode())
+        else:
+            jsonResult["json"] = json.loads(myBody.decode())
+        
+        self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(bytes(json.dumps(jsonResult).encode()))
