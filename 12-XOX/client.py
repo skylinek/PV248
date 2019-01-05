@@ -117,10 +117,6 @@ async def main():
                     print("invalid input")
                 else:
                     isBoardPrinted = False
-
-
-
-
         else:
             if "winner" in myStatus:
                 if myStatus["winner"] == player:
@@ -130,11 +126,7 @@ async def main():
                 else:
                     print("you lose")
                 break
-
-
-
-
-        #await asyncio.sleep(1)
+        await asyncio.sleep(1)
 
 
 
