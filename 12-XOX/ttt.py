@@ -1,18 +1,22 @@
 import sys
 from aiohttp import web
+import asyncio
+
 
 mySavedGames=dict()
 routes = web.RouteTableDef()
 
+@asyncio.coroutine
 @routes.get('/list')
 async def list(request):
     res = []
     for id, name in mySavedGames.items():
         res.append({"id": id, "name": name.nameOfGame})
+
     return  web.json_response(res)
 
 
-
+@asyncio.coroutine
 @routes.get('/start')
 async def startGame(request):
     mySavedGames[str(len(mySavedGames) + 1)] = myPlayground()
@@ -21,9 +25,10 @@ async def startGame(request):
     except:
         mySavedGames[str(len(mySavedGames))].setName("")
 
+
     return web.json_response({"id": len(mySavedGames)})
 
-
+@asyncio.coroutine
 @routes.get('/status')
 async def statusGame(request):
 
@@ -33,12 +38,13 @@ async def statusGame(request):
         return web.Response(text="Wrong arguments", status=422)
 
     if statusGame.winner is None:
+       
         return web.json_response(dict([('board',statusGame.board),('next',int(statusGame.next))]))
     else:
         return web.json_response(dict([('winner',  int(statusGame.winner))]))
 
 
-
+@asyncio.coroutine
 @routes.get('/play')
 async def playGame(request):
     try:
@@ -104,6 +110,7 @@ async def playGame(request):
         if player==myBoard[0][2] == myBoard[1][1] == myBoard[2][0]:
             playGame.winner = player
 
+   
         return web.json_response(dict([('status', "ok")]))
     else:
         return web.json_response(dict([('status', "bad"),("message","Game is over")]))

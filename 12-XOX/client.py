@@ -18,8 +18,6 @@ async def printList(list):
                         if col!=0:
                             clear=False
 
-                # print(myStatus["board"])
-                # if myStatus["board"]
             if clear==True:
                 print(game["id"]+" "+game["name"])
 
@@ -136,7 +134,7 @@ async def main():
 
 
 
-        await asyncio.sleep(1)
+        #await asyncio.sleep(1)
 
 
 
