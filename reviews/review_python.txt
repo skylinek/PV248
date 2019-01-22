@@ -1,0 +1,154 @@
+review od 433383, *0.5, super informace, včetně ukázek jak to dělat lépe, díky moc za zpětnou vazbu 
+
+Na všetkých vstupoch, ktoré som testovala, sa tvoj kód choval korektne, takže len štylistické poznámky :)
+
+01 - stat.py:
+Tento program môže beží v 2 módoch - ‘composer’ alebo ‘century’ (záleží na vstupnom argumente). Ty riešiš rozhodovanie, či hľadať composer alebo century vo fcii ‘CheckIsCentury()’, čo mi príde trošku zbytočné, kedže navyše musíš používať aj globálnu premennú (‘isCentury’). Z môjho pohľadu by bolo jednoduchšie použiť pri čítaní vstup. argumentu if-elif vetvenie a operácie súvisiace s hľadaním `composer` previesť v jednom bloku, a s `century` v druhom bloku.
+
+
+>>def add_year_to_dictionary(year):  [line 32]
+>>    if year in dict:
+>>        dict[year] = dict[year] + 1
+>>    else:
+>>        dict[year] = 1
+
+Táto fcia ti počíta výskytov kľúča. Python má na to už predpripravenú štruktúru s názvom ‘Counter’, ktorej predhodíš pole a ona spraví presne to isté čo tvoja fcia `add_year_to_dictionary()`.
+Použitie je jednoduché, napr.:
+
+>>from collections import Counter
+>>
+>>composers = [‘Bach’, ‘Mozart’, ‘Telemann’, ‘Bach’, ‘Bach’]
+>>for key, value in Counter([c for c in composers if c]).items():
+>>    print(key + ': ' + str(value))
+
+Výstup:
+#Bach: 3
+#Mozart: 1
+#Telemann: 1
+
+
+04 - getprint_py: 
+Ak chceš vložiť v jednom kroku viacej hodnôt do dict-u, nemusíš to robiť takto:
+>>for exe in execute:   [line 21]
+>>    composer={}
+>>    composer["name"] = exe[3]
+>>    composer["born"]=exe[1]
+>>    composer["died"]=exe[2]
+>>
+>>	composers.append(composer)
+
+ale môžeš si vytvoriť “nepomenovaný” dict (ušetríš nepotrebnú premennú), všetky hodnoty doňho hodiť a ten pridať do výsledného poľa.
+>>for exe in execute:   [line 21]
+>>    composers.append({
+>>		“name”: exe[3],
+>>		“born”: exe[1],
+>>		“died”: exe[2],
+>>	})
+
+
+Čo sa týka názvov ciest alebo iných fixne daných “konštánt”, je dobrým zvykom uložiť si hodnotu do konštanty (na začiatok súboru pod importy). Má to dobrú výhodu, že hneď na prvý pohľad vidíš, ktoré veci sú fixné a ak ich používaš viackrát, stačí ich meniť len na jednom mieste. V tvojom kóde by sa to dalo využiť pre premennú 
+>>databasePath = "scorelib.dat"   [line 15]
+
+Kód s konštantou by vyzeral:
+>>from db_operations_peta import *
+>>
+>>DATABASE_PATH = "scorelib.dat"
+>>
+>>def main():
+>>    if len(sys.argv) > 2:
+>>        print("Wrong Number Arguments")
+>>        raise SystemExit
+>>
+>>    printID_argument=sys.argv[1]
+>>    try:
+>>        printID_argument= int(printID_argument)
+>>    except ValueError:
+>>        print("Wrong Arguments, Argument is not INT")
+>>        raise SystemExit
+>>        
+>>    db = DBoperations(DATABASE_PATH)
+
+
+04 - search_py:
+Fcia ‘makeArrayOf()’ mi na prvý pohľad príde veľmi zložitá (aj keď je jednoduchá). 
+>>def makeArrayOf(pole,index):   [line 4]
+>>    myArray = []
+>>    for instance  in pole:
+>>        myArray.append(instance[index])
+>>    return myArray
+
+Pomocou list comprehension by fcia vyzerala čistejšie a bola by bez zbytočných premenných:
+>>def makeArrayOf(pole,index):
+>>    return [instance[index] for instance  in pole]
+
+
+Čo sa mi na tvojom kóde (jeho logike) najviac páči je fakt, že v db robíš len jednoduché SELECT-y bez zbytočného zanorovania sa (stačili ti 3 for cykly, kdežto ja som ich použila až 6 :D)
+
+
+05 - eqn.py:
+Čo mi na prvý pohľad padlo do oka sú medzery okolo operátorov, premenných… Občas tam je medzera, občas nie, čo podľa mňa trošku zhoršuje čitateľnosť kódu. 
+Napr. (na prvý pohľad jeden dlhý súvislý riadok) >>matrix_rank_A=nu.linalg.matrix_rank(leftSide)   [line 121]
+
+
+Ak sa rozhodneš ošetrovať nekorektný počet vstupných argumentov, očakávala by som, že sa to bude vyhodnocovať štýlom:
+- ak zadáš správny počet args - ok
+- inak - nok (vyhodíš nejakú hlášku)
+
+Ale v tvojom prípade je to:
+- ak zadáš správny počet args - ok
+- ak zadáš vyšší počet args - nok  (vyhodíš nejakú hlášku)
+- inak (menší počet args) - neošetrené, padne na ‘IndexError’
+
+
+Je dobrým zvykom zatvárať otvorené súbory. Buď môžeš použiť konštrukciu 
+>>f = open(file, “r”)
+>>f.close()
+
+alebo druhou možnosťou je použitie ‘with’, ktorý sa postará o to, aby bol súbor automaticky po konci bloku uzatvorený.
+>>with open(file, “r”) as f:
+>>	for line in f:
+
+
+Podmienka ‘if sth is not “”’ sa dá prepísať ako:
+>>if withoutMinus[0]:   [line 23]
+
+Pretože ‘if’ sa vyhodnocuje ako ‘if sth is True then’ a prázdny reťazec je False, takže ‘if sth is not “”’ = ‘if sth is not False’ = ‘if sth is True’ = ‘if sth’.
+
+
+To isté platí aj pre test na False:
+>>if isDigit is False:   [line 46]
+stačí:
+>>if not isDigit: 
+
+
+>>if el.strip().isalpha() is True:   [line 42]
+stačí len
+>>if el.strip().isalpha():
+kedže isalpha() vracia True alebo False.
+
+
+Ak používaš nejaký výraz len raz, je zbytočné preň vytvárať špeci premennú. Napr:
+>>if el.strip().isalpha() is True:   [line 42]
+>>	character=el;
+>>	charactersOfLeft.append(character)
+
+bez použitia “zbytočnej” premennej ‘character’:
+>>if el.strip().isalpha():
+>>	charactersOfLeft.append(el)
+
+
+Inkrementácia v Pythone sa dá zapísať zjednodušene:
+>>k=k+1   [line 71]
+
+ako:
+>>k += 1
+
+
+For cyklus 
+>>for a in range(cc):   [line 82]
+>>	numbers.append(0)
+
+sa dá prepísať jednoduchšie pomocou list comprehension:
+>>numbers.extend([0 for _ in range(cc)])
+
+Navyše, ak používaš len nejakú premennú vo for cykle, ktorú nikde nepoužívaš, môžeš použiť nenazvanú premennú ‘_’. 
